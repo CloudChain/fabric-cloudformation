@@ -48,6 +48,13 @@ function writeSetupFabric {
     container_name: setup
     image: hyperledger/fabric-ca-tools
     command: /bin/bash -c '/scripts/setup-fabric.sh 2>&1 | tee /$SETUP_LOGFILE; sleep 99999'
+    environment:
+      - ORDERER_ORGS="$ORDERER_ORGS"
+      - PEER_ORGS="$PEER_ORGS"
+      - NUM_PEERS=$NUM_PEERS
+      - NUM_ORDERERS=$NUM_ORDERERS
+      - CHANNEL_NAME=$CHANNEL_NAME
+      - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA
     volumes:
       - ./scripts:/scripts
       - ./$DATA:/$DATA
@@ -91,6 +98,12 @@ function writeRunFabric {
     image: hyperledger/fabric-ca-tools
     environment:
       - GOPATH=/opt/gopath
+      - ORDERER_ORGS="$ORDERER_ORGS"
+      - PEER_ORGS="$PEER_ORGS"
+      - NUM_PEERS=$NUM_PEERS
+      - NUM_ORDERERS=$NUM_ORDERERS
+      - CHANNEL_NAME=$CHANNEL_NAME
+      - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA
     command: /bin/bash -c 'sleep 3;/scripts/run-fabric.sh 2>&1 | tee /$RUN_LOGFILE; sleep 99999'
     volumes:
       - ./scripts:/scripts
@@ -133,6 +146,12 @@ function writeRootCA {
       - BOOTSTRAP_USER_PASS=$ROOT_CA_ADMIN_USER_PASS
       - TARGET_CERTFILE=$ROOT_CA_CERTFILE
       - FABRIC_ORGS="$ORGS"
+      - ORDERER_ORGS="$ORDERER_ORGS"
+      - PEER_ORGS="$PEER_ORGS"
+      - NUM_PEERS=$NUM_PEERS
+      - NUM_ORDERERS=$NUM_ORDERERS
+      - CHANNEL_NAME=$CHANNEL_NAME
+      - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA
     volumes:
       - ./scripts:/scripts
       - ./$DATA:/$DATA
@@ -158,6 +177,12 @@ function writeIntermediateCA {
       - TARGET_CHAINFILE=$INT_CA_CHAINFILE
       - ORG=$ORG
       - FABRIC_ORGS="$ORGS"
+      - ORDERER_ORGS="$ORDERER_ORGS"
+      - PEER_ORGS="$PEER_ORGS"
+      - NUM_PEERS=$NUM_PEERS
+      - NUM_ORDERERS=$NUM_ORDERERS
+      - CHANNEL_NAME=$CHANNEL_NAME
+      - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA
     volumes:
       - ./scripts:/scripts
       - ./$DATA:/$DATA
@@ -194,6 +219,12 @@ function writeOrderer {
       - ORDERER_DEBUG_BROADCASTTRACEDIR=$LOGDIR
       - ORG=$ORG
       - ORG_ADMIN_CERT=$ORG_ADMIN_CERT
+      - ORDERER_ORGS="$ORDERER_ORGS"
+      - PEER_ORGS="$PEER_ORGS"
+      - NUM_PEERS=$NUM_PEERS
+      - NUM_ORDERERS=$NUM_ORDERERS
+      - CHANNEL_NAME=$CHANNEL_NAME
+      - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA
     command: /bin/bash -c '/scripts/start-orderer.sh 2>&1 | tee /$ORDERER_LOGFILE'
     volumes:
       - ./scripts:/scripts
@@ -236,6 +267,12 @@ function writePeer {
       - CORE_PEER_GOSSIP_EXTERNALENDPOINT=$PEER_HOST:7051
       - CORE_PEER_GOSSIP_SKIPHANDSHAKE=true
       - ORG=$ORG
+      - ORDERER_ORGS="$ORDERER_ORGS"
+      - PEER_ORGS="$PEER_ORGS"
+      - NUM_PEERS=$NUM_PEERS
+      - NUM_ORDERERS=$NUM_ORDERERS
+      - CHANNEL_NAME=$CHANNEL_NAME
+      - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA
       - ORG_ADMIN_CERT=$ORG_ADMIN_CERT"
    if [ $NUM -gt 1 ]; then
       echo "      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1-${ORG}:7051"
