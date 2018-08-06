@@ -28,6 +28,8 @@ if [ ! -f ${DOCKER_SWARM_INIT} ]; then
         fatal "Docker swarm init failure."
     fi
     touch ${DOCKER_SWARM_INIT}
+    log "Join docker swarm cluster $1"
+    exit 0
 fi
 
 case $1 in 
