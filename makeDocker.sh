@@ -84,8 +84,6 @@ function writeStartFabric {
 # Write a service to run a fabric test including creating a channel,
 # installing chaincode, invoking and querying
 function writeRunFabric {
-   # Set samples directory relative to this script
-   SAMPLES_DIR=$(dirname $(cd ${SDIR} && pwd))
    # Set fabric directory relative to GOPATH
    FABRIC_DIR=${GOPATH}/src/github.com/hyperledger/fabric
    echo "  run:
@@ -97,7 +95,7 @@ function writeRunFabric {
     volumes:
       - ./scripts:/scripts
       - ./$DATA:/$DATA
-      - ${SAMPLES_DIR}:/opt/gopath/src/github.com/hyperledger/fabric-samples
+      - ./:/opt/gopath/src/github.com/hyperledger/fabric-samples
       - ${FABRIC_DIR}:/opt/gopath/src/github.com/hyperledger/fabric
     networks:
       - $NETWORK
@@ -258,6 +256,7 @@ function writeHeader {
 
 networks:
   $NETWORK:
+      driver: overlay
 
 services:
 "

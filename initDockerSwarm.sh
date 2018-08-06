@@ -23,7 +23,7 @@ if [ ! -f ${DOCKER_SWARM_INIT} ]; then
     log "Init docker swarm"
     docker swarm init && \
     docker swarm join-token manager | grep "docker"|sed 's/^ *//' > ${DOCKER_SWARM_MANAGER} && \
-    docker swarm join-token manager | grep "docker"|sed 's/^ *//' > ${DOCKER_SWARM_WORKER}
+    docker swarm join-token worker | grep "docker"|sed 's/^ *//' > ${DOCKER_SWARM_WORKER}
     if [ $? -ne 0 ]; then
         fatal "Docker swarm init failure."
     fi
@@ -37,7 +37,7 @@ manager)
     ;;
 worker)
     log "Join docker swarm cluster $1"
-    sh ${DOCKER_SWARM_MANAGER}
+    sh ${DOCKER_SWARM_WORKER}
     ;;
 *)
     help

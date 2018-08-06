@@ -37,4 +37,4 @@ fi
 
 # Create the docker containers
 log "Creating docker containers ..."
-echo "docker-compose up -d $1"
+echo "docker-compose -f docker-compose.yml up -d $1"
