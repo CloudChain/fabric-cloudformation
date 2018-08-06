@@ -14,13 +14,13 @@
 NETWORK=fabric-ca
 
 # Names of the orderer organizations
-ORDERER_ORGS="org0"
+ORDERER_ORGS=${ORDERER_ORGS:-"org0"}
 
 # Names of the peer organizations
-PEER_ORGS="org1 org2"
+PEER_ORGS=${PEER_ORGS:-"org1 org2"}
 
 # Number of peers in each peer organization
-NUM_PEERS=2
+NUM_PEERS=${NUM_PEERS:-2}
 
 #
 # The remainder of this file contains variables which typically would not be changed.
@@ -33,7 +33,7 @@ ORGS="$ORDERER_ORGS $PEER_ORGS"
 ADMINCERTS=true
 
 # Number of orderer nodes
-NUM_ORDERERS=1
+NUM_ORDERERS=${NUM_ORDERERS:-1}
 
 # The volume mount to share data between containers
 DATA=data
@@ -45,7 +45,7 @@ GENESIS_BLOCK_FILE=/$DATA/genesis.block
 CHANNEL_TX_FILE=/$DATA/channel.tx
 
 # Name of test channel
-CHANNEL_NAME=mychannel
+CHANNEL_NAME=${CHANNEL_NAME:-"mychannel"}
 
 # Query timeout in seconds
 QUERY_TIMEOUT=15
@@ -76,7 +76,7 @@ RUN_FAIL_FILE=${LOGDIR}/run.fail
 export FABRIC_CA_CLIENT_ID_AFFILIATION=org1
 
 # Set to true to enable use of intermediate CAs
-USE_INTERMEDIATE_CA=true
+USE_INTERMEDIATE_CA=${USE_INTERMEDIATE_CA:-true}
 
 
 # Config block file path
