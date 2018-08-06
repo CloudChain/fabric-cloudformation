@@ -5,19 +5,36 @@ source ${SDIR}/scripts/env.sh
 
 cd ${SDIR}
 
-# Start with a clean data directory
-DDIR=${SDIR}/${DATA}
-if [ -d ${DDIR} ]; then
-   log "Cleaning up the data directory from previous run at $DDIR"
-   rm -rf ${SDIR}/data
+function help {
+    echo "Usage:
+
+    $0 setup|orderer{Number}-{OrgName}|peer{Number}-{OrgName}|couchdb|kafka|run|all
+
+    Example: 
+    $0 setup - Setup Org CA
+    $0 orderer1-org1 - Start org1 orderer1 node
+
+    Options:
+    setup - Setup Org CA
+    orderer - Start fabric network orderer node
+    peer - Start fabric network peer node
+    couchdb - Start couchdb state database
+    kafka - Start kafka consensus
+    run - Run test fabric network
+    all - Start all fabric node
+    "
+    exit 1
+}
+
+if [ $# -le 0 ]; then
+    help
 fi
-mkdir -p ${DDIR}/logs
 
 # Judge the docker-compose file
-if [ ! -f ${SDIR}/docker-complete.yml ]; then
+if [ ! -f ${SDIR}/docker-compose.yml ]; then
     ${SDIR}/makeDocker.sh
 fi
 
 # Create the docker containers
 log "Creating docker containers ..."
-docker-compose up -d $1
+echo "docker-compose up -d $1"

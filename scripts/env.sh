@@ -85,6 +85,12 @@ CONFIG_BLOCK_FILE=/tmp/config_block.pb
 # Update config block payload file path
 CONFIG_UPDATE_ENVELOPE_FILE=/tmp/config_update_as_envelope.pb
 
+# Docker Swarm Config
+DOCKER_SWARM_INIT=${LOGDIR}/docker_swarm.init
+DOCKER_SWARM_MANAGER=${LOGDIR}/docker_swarm_manager
+DOCKER_SWARM_WORKER=${LOGDIR}/docker_swarm_worker
+
+
 # initOrgVars <ORG>
 function initOrgVars {
    if [ $# -ne 1 ]; then

@@ -101,23 +101,24 @@ function writeRunFabric {
       - ${FABRIC_DIR}:/opt/gopath/src/github.com/hyperledger/fabric
     networks:
       - $NETWORK
-    depends_on:"
-   for ORG in $ORDERER_ORGS; do
-      COUNT=1
-      while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
-         initOrdererVars $ORG $COUNT
-         echo "      - $ORDERER_NAME"
-         COUNT=$((COUNT+1))
-      done
-   done
-   for ORG in $PEER_ORGS; do
-      COUNT=1
-      while [[ "$COUNT" -le $NUM_PEERS ]]; do
-         initPeerVars $ORG $COUNT
-         echo "      - $PEER_NAME"
-         COUNT=$((COUNT+1))
-      done
-   done
+    "
+  #  depends_on:"
+  #  for ORG in $ORDERER_ORGS; do
+  #     COUNT=1
+  #     while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
+  #        initOrdererVars $ORG $COUNT
+  #        echo "      - $ORDERER_NAME"
+  #        COUNT=$((COUNT+1))
+  #     done
+  #  done
+  #  for ORG in $PEER_ORGS; do
+  #     COUNT=1
+  #     while [[ "$COUNT" -le $NUM_PEERS ]]; do
+  #        initPeerVars $ORG $COUNT
+  #        echo "      - $PEER_NAME"
+  #        COUNT=$((COUNT+1))
+  #     done
+  #  done
 }
 
 function writeRootCA {
@@ -201,8 +202,6 @@ function writeOrderer {
       - ./$DATA:/$DATA
     networks:
       - $NETWORK
-    depends_on:
-      - setup
 "
 }
 
@@ -251,8 +250,6 @@ function writePeer {
       - /var/run:/host/var/run
     networks:
       - $NETWORK
-    depends_on:
-      - setup
 "
 }
 
