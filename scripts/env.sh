@@ -22,6 +22,23 @@ PEER_ORGS=${PEER_ORGS:-"org1 org2"}
 # Number of peers in each peer organization
 NUM_PEERS=${NUM_PEERS:-2}
 
+
+# State database use couchdb
+USE_STATE_DATABASE_COUCHDB=${USE_STATE_DATABASE_COUCHDB:-false}
+
+# CouchDB user
+COUCHDB_USER=${COUCHDB_USER:-}
+
+# CouchDB Password
+COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-}
+
+
+# Kafka
+USE_CONSENSUS_KAFKA=${USE_CONSENSUS_KAFKA:-false}
+NUM_KAFKA=${NUM_KAFKA:-4}
+NUM_ZOOKEEPER=3
+
+
 #
 # The remainder of this file contains variables which typically would not be changed.
 #
@@ -213,6 +230,8 @@ function initPeerVars {
    MYHOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
    TLSDIR=$MYHOME/tls
 
+   COUCHDB_NAME=couchdb${NUM}-${ORG}
+
    export FABRIC_CA_CLIENT=$MYHOME
    export CORE_PEER_ID=$PEER_HOST
    export CORE_PEER_ADDRESS=$PEER_HOST:7051
@@ -240,6 +259,38 @@ function initPeerVars {
       export CORE_PEER_GOSSIP_BOOTSTRAP=peer1-${ORG}:7051
    fi
    export ORDERER_CONN_ARGS="$ORDERER_PORT_ARGS --keyfile $CORE_PEER_TLS_CLIENTKEY_FILE --certfile $CORE_PEER_TLS_CLIENTCERT_FILE"
+
+   # CouchDB
+   export CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+   export CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=$COUCHDB_NAME:5984
+   export CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=$COUCHDB_USER
+   export CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=$COUCHDB_PASSWORD
+
+}
+
+
+
+# initZKVars  <NUM>
+function initZKVars {
+   if [ $# -ne 1 ]; then
+      echo "Usage: initZKVars <NUM>: $*"
+      exit 1
+   fi
+   NUM=$1
+   ZOO_MY_ID=$NUM
+   ZOO_NAME=zoo${NUM}
+}
+
+
+# initKafkaVars  <NUM>
+function initKafkaVars {
+   if [ $# -ne 1 ]; then
+      echo "Usage: initKafkaVars <NUM>: $*"
+      exit 1
+   fi
+   NUM=$1
+   KAFKA_NAME=kafka$NUM
+   KAFKA_BROKER_ID=$NUM
 }
 
 # Switch to the current org's admin identity.  Enroll if not previously enrolled.

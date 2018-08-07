@@ -46,9 +46,9 @@ fi
 
 # Judge the docker-compose file
 if [ ! -f ${SDIR}/docker-compose.yml ]; then
-    ${SDIR}/makeDocker.sh
+    fatal "Can't found $*"
 fi
 
 # Create the docker containers
-log "Creating docker containers ..."
-docker-compose -p net -f docker-compose.yml up -d $*
+log "Stoping docker containers ..."
+docker-compose -p net -f docker-compose.yml down

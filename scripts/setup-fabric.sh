@@ -173,9 +173,14 @@ Profiles:
     Orderer:
       # Orderer Type: The orderer implementation to start
       # Available types are \"solo\" and \"kafka\"
-      OrdererType: solo
+      "
+    if $USE_CONSENSUS_KAFKA; then
+      echo "      OrdererType: kafka
       Addresses:"
-
+    else
+      echo "      OrdererType: solo
+      Addresses:"
+    fi
    for ORG in $ORDERER_ORGS; do
       local COUNT=1
       while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
@@ -207,9 +212,17 @@ Profiles:
       Kafka:
         # Brokers: A list of Kafka brokers to which the orderer connects
         # NOTE: Use IP:port notation
-        Brokers:
-          - 127.0.0.1:9092
+        Brokers:"
+    if $USE_CONSENSUS_KAFKA; then
+      for (( k=1; k<=$NUM_KAFKA; k++ )); do
+      initKafkaVars $k
+      echo "          - $KAFKA_NAME:9092"
+      done
+    else
+      echo "          - 127.0.0.1:9092"
+    fi
 
+    echo "
       # Organizations is the list of orgs which are defined as participants on
       # the orderer side of the network
       Organizations:"

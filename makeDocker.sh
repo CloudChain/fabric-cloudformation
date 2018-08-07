@@ -19,6 +19,9 @@ function main {
    if $USE_INTERMEDIATE_CA; then
       writeIntermediateFabricCA
    fi
+   if $USE_CONSENSUS_KAFKA; then
+      writeKafkaZK
+   fi
    writeSetupFabric
    writeStartFabric
    writeRunFabric
@@ -42,6 +45,66 @@ function writeIntermediateFabricCA {
    done
 }
 
+
+# Write services for the kafka and zookeeper
+function writeKafkaZK {
+  for (( k=1; k<=$NUM_KAFKA; k++ )); do
+    initKafkaVars $k
+    writeKafka
+  done
+
+ for (( z=1; z<=$NUM_ZOOKEEPER; z++ )); do
+    initZKVars $z
+    writeZooKeeper
+  done
+}
+
+function writeKafka {
+  KAFKA_ZOOKEEPER_CONNECT=()
+  for (( i=1; i<=$NUM_ZOOKEEPER; i++ )); do
+    initZKVars $i
+    if [ $i -eq $NUM_ZOOKEEPER ];then
+      KAFKA_ZOOKEEPER_CONNECT[$i]=$ZOO_NAME:2181
+    else
+      KAFKA_ZOOKEEPER_CONNECT[$i]=$ZOO_NAME:2181,
+    fi
+  done
+ echo "  $KAFKA_NAME:
+    container_name: $KAFKA_NAME
+    image: hyperledger/fabric-kafka
+    environment:
+      - KAFKA_BROKER_ID=$KAFKA_BROKER_ID
+      - KAFKA_ZOOKEEPER_CONNECT=${KAFKA_ZOOKEEPER_CONNECT[@]}
+      - KAFKA_LOG_RETENTION_MS=-1
+      - KAFKA_MESSAGE_MAX_BYTES=103809024
+      - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
+      - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+      - KAFKA_MIN_INSYNC_REPLICAS=2
+    networks:
+      - $NETWORK
+    depends_on:"
+   for (( i=1; i<=$NUM_ZOOKEEPER; i++ )); do
+      initZKVars $i
+      echo "      - $ZOO_NAME"
+   done
+}
+
+function writeZooKeeper {
+  ZOO_SERVERS=()
+  for (( i=1; i<=$NUM_ZOOKEEPER; i++ )); do
+      ZOO_SERVERS[$i]=server.$i=$ZOO_NAME:2888:3888
+  done
+
+  echo "  $ZOO_NAME:
+    container_name: $ZOO_NAME
+    image: hyperledger/fabric-zookeeper
+    environment:
+      - ZOO_MY_ID=$ZOO_MY_ID
+      - ZOO_SERVERS=${ZOO_SERVERS[@]}
+    networks:
+      - $NETWORK"
+}
+
 # Write a service to setup the fabric artifacts (e.g. genesis block, etc)
 function writeSetupFabric {
    echo "  setup:
@@ -55,6 +118,9 @@ function writeSetupFabric {
       - NUM_ORDERERS=$NUM_ORDERERS
       - CHANNEL_NAME=$CHANNEL_NAME
       - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA
+      - USE_CONSENSUS_KAFKA=$USE_CONSENSUS_KAFKA
+      - NUM_KAFKA=$NUM_KAFKA
+      - NUM_ZOOKEEPER=$NUM_ZOOKEEPER
     volumes:
       - ./scripts:/scripts
       - ./$DATA:/$DATA
@@ -82,6 +148,9 @@ function writeStartFabric {
       COUNT=1
       while [[ "$COUNT" -le $NUM_PEERS ]]; do
          initPeerVars $ORG $COUNT
+         if $USE_STATE_DATABASE_COUCHDB; then
+            writeCouchDB
+         fi
          writePeer
          COUNT=$((COUNT+1))
       done
@@ -224,8 +293,25 @@ function writeOrderer {
       - NUM_PEERS=$NUM_PEERS
       - NUM_ORDERERS=$NUM_ORDERERS
       - CHANNEL_NAME=$CHANNEL_NAME
-      - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA
-    command: /bin/bash -c '/scripts/start-orderer.sh 2>&1 | tee /$ORDERER_LOGFILE'
+      - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA"
+  if $USE_CONSENSUS_KAFKA; then
+    KAFKA_BROKERS=()
+    for (( i=1; i<=$NUM_KAFKA; i++ )); do
+      initKafkaVars $i
+      if [ $i -eq $NUM_KAFKA ];then
+        KAFKA_BROKERS[$i]=$KAFKA_NAME:9092
+      else
+        KAFKA_BROKERS[$i]=$KAFKA_NAME:9092,
+      fi
+    done
+  echo "      - ORDERER_KAFKA_RETRY_SHORTINTERVAL=1s
+      - ORDERER_KAFKA_RETRY_SHORTTOTAL=30s
+      - ORDERER_KAFKA_VERBOSE=true
+      - ORDERER_GENERAL_GENESISPROFILE=SampleInsecureKafka
+      - CONFIGTX_ORDERER_ORDERERTYPE=kafka
+      - CONFIGTX_ORDERER_KAFKA_BROKERS=[${KAFKA_BROKERS[@]}]"
+  fi
+  echo "    command: /bin/bash -c '/scripts/start-orderer.sh 2>&1 | tee /$ORDERER_LOGFILE'
     volumes:
       - ./scripts:/scripts
       - ./$DATA:/$DATA
@@ -274,6 +360,13 @@ function writePeer {
       - CHANNEL_NAME=$CHANNEL_NAME
       - USE_INTERMEDIATE_CA=$USE_INTERMEDIATE_CA
       - ORG_ADMIN_CERT=$ORG_ADMIN_CERT"
+   if $USE_STATE_DATABASE_COUCHDB; then
+      echo "      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=$COUCHDB_NAME:5984
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=$COUCHDB_USER
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=$COUCHDB_PASSWORD
+      "
+   fi
    if [ $NUM -gt 1 ]; then
       echo "      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1-${ORG}:7051"
    fi
@@ -283,6 +376,22 @@ function writePeer {
       - ./scripts:/scripts
       - ./$DATA:/$DATA
       - /var/run:/host/var/run
+    networks:
+      - $NETWORK"
+  if $USE_STATE_DATABASE_COUCHDB; then
+  echo "    depends_on:
+      - $COUCHDB_NAME
+  "
+  fi
+}
+
+function writeCouchDB {
+   echo "  $COUCHDB_NAME:
+    container_name: $COUCHDB_NAME
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=$COUCHDB_USER
+      - COUCHDB_PASSWORD=$COUCHDB_PASSWORD
     networks:
       - $NETWORK
 "
