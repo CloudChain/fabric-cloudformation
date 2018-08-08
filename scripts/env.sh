@@ -37,7 +37,14 @@ COUCHDB_PASSWORD=${COUCHDB_PASSWORD:-}
 USE_CONSENSUS_KAFKA=${USE_CONSENSUS_KAFKA:-false}
 NUM_KAFKA=${NUM_KAFKA:-4}
 NUM_ZOOKEEPER=3
-
+# http://hyperledger-fabric.readthedocs.io/en/master/kafka.html
+# min.insync.replicas 
+# default.replication.factor
+KAFKA_DEFAULT_REPLICATION_FACTOR=$(expr $NUM_KAFKA - 1)
+KAFKA_MIN_INSYNC_REPLICAS=$(expr $KAFKA_DEFAULT_REPLICATION_FACTOR - 1)
+if [ $KAFKA_MIN_INSYNC_REPLICAS -gt 2 ]; then
+    KAFKA_MIN_INSYNC_REPLICAS=2
+fi
 
 #
 # The remainder of this file contains variables which typically would not be changed.

@@ -55,7 +55,7 @@ function writeKafkaZK {
 
  for (( z=1; z<=$NUM_ZOOKEEPER; z++ )); do
     initZKVars $z
-    writeZooKeeper
+    writeZooKeeper $z
   done
 }
 
@@ -79,7 +79,8 @@ function writeKafka {
       - KAFKA_MESSAGE_MAX_BYTES=103809024
       - KAFKA_REPLICA_FETCH_MAX_BYTES=103809024
       - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
-      - KAFKA_MIN_INSYNC_REPLICAS=2
+      - KAFKA_MIN_INSYNC_REPLICAS=$KAFKA_MIN_INSYNC_REPLICAS
+      - KAFKA_DEFAULT_REPLICATION_FACTOR=$KAFKA_DEFAULT_REPLICATION_FACTOR
     networks:
       - $NETWORK
     depends_on:"
@@ -90,11 +91,14 @@ function writeKafka {
 }
 
 function writeZooKeeper {
+  local num=$1
   ZOO_SERVERS=()
   for (( i=1; i<=$NUM_ZOOKEEPER; i++ )); do
+      initZKVars $i
       ZOO_SERVERS[$i]=server.$i=$ZOO_NAME:2888:3888
   done
 
+  initZKVars $num
   echo "  $ZOO_NAME:
     container_name: $ZOO_NAME
     image: hyperledger/fabric-zookeeper
@@ -316,8 +320,15 @@ function writeOrderer {
       - ./scripts:/scripts
       - ./$DATA:/$DATA
     networks:
-      - $NETWORK
-"
+      - $NETWORK"
+  if $USE_CONSENSUS_KAFKA; then
+  KAFKA_BROKERS=()
+  echo "    depends_on:"
+  for (( k=1; k<=$NUM_KAFKA; k++ )); do
+      initKafkaVars $k
+      echo "      - $KAFKA_NAME"
+    done
+  fi
 }
 
 function writePeer {
