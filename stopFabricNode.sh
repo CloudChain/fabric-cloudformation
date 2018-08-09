@@ -13,3 +13,6 @@ fi
 # Create the docker containers
 log "Stoping docker containers ..."
 docker-compose -p net -f docker-compose.yml down
+docker rm -f $(docker ps -aq --filter name=dev-peer)
+docker rmi $(docker images | awk '$1 ~ /dev-peer/ { print $3 }')
+rm -fr data docker-compose.yml

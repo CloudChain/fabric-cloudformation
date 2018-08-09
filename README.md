@@ -1,6 +1,6 @@
-# Hyperledger Fabric 多主机部署
+# Hyperledger Fabric 测试环境
 
-使用docker swarm 集群模式部署Fabric网络
+使用docker及docker-compose 自动部署
 
 ## 功能
 
@@ -10,28 +10,17 @@
 * CA 证书管理
 
 
-
-## 前提
-
-* 所有参与Fabric 网络节点使用共享目录
-
-
-
 ## 使用
 
 ```shell
 cd 共享目录
 git clone https://github.com/lisuo3389/fabric-cloudformation.git
 
-# 所有参与fabric 节点都要执行
+# 初始化安装
 ./preRequisites.sh 
 
-# 指定swarm 节点类型 `manager` `worker`
-# 在不同类型的swarm节点上执行
-./initDockerSwarm.sh 
-
-# 在不同服务类型节点上执行
-startFabricNode.sh # 服务名称
+# 启动Fabric 网络
+startFabricNode.sh run
 ```
 
 **Fabric 配置系统环境变量**
@@ -49,6 +38,14 @@ export NUM_ORDERERS=1
 export CHANNEL_NAME="testchannel"
 # 是否使用中间ca
 export USE_INTERMEDIATE_CA=true
+
+# CouchDB
+export USE_STATE_DATABASE_COUCHDB=true
+export COUCHDB_USER
+export COUCHDB_PASSWORD
+# Kafka consensus
+export USE_CONSENSUS_KAFKA=true
+export NUM_KAFKA=4
 ```
 
 

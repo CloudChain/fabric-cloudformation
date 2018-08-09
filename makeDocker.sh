@@ -185,24 +185,23 @@ function writeRunFabric {
       - ${FABRIC_DIR}:/opt/gopath/src/github.com/hyperledger/fabric
     networks:
       - $NETWORK
-    "
-  #  depends_on:"
-  #  for ORG in $ORDERER_ORGS; do
-  #     COUNT=1
-  #     while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
-  #        initOrdererVars $ORG $COUNT
-  #        echo "      - $ORDERER_NAME"
-  #        COUNT=$((COUNT+1))
-  #     done
-  #  done
-  #  for ORG in $PEER_ORGS; do
-  #     COUNT=1
-  #     while [[ "$COUNT" -le $NUM_PEERS ]]; do
-  #        initPeerVars $ORG $COUNT
-  #        echo "      - $PEER_NAME"
-  #        COUNT=$((COUNT+1))
-  #     done
-  #  done
+    depends_on:"
+   for ORG in $ORDERER_ORGS; do
+      COUNT=1
+      while [[ "$COUNT" -le $NUM_ORDERERS ]]; do
+         initOrdererVars $ORG $COUNT
+         echo "      - $ORDERER_NAME"
+         COUNT=$((COUNT+1))
+      done
+   done
+   for ORG in $PEER_ORGS; do
+      COUNT=1
+      while [[ "$COUNT" -le $NUM_PEERS ]]; do
+         initPeerVars $ORG $COUNT
+         echo "      - $PEER_NAME"
+         COUNT=$((COUNT+1))
+      done
+   done
 }
 
 function writeRootCA {
@@ -320,10 +319,11 @@ function writeOrderer {
       - ./scripts:/scripts
       - ./$DATA:/$DATA
     networks:
-      - $NETWORK"
+      - $NETWORK
+    depends_on:
+      - setup"
   if $USE_CONSENSUS_KAFKA; then
   KAFKA_BROKERS=()
-  echo "    depends_on:"
   for (( k=1; k<=$NUM_KAFKA; k++ )); do
       initKafkaVars $k
       echo "      - $KAFKA_NAME"
@@ -388,11 +388,11 @@ function writePeer {
       - ./$DATA:/$DATA
       - /var/run:/host/var/run
     networks:
-      - $NETWORK"
+      - $NETWORK
+    depends_on:
+      - setup"
   if $USE_STATE_DATABASE_COUCHDB; then
-  echo "    depends_on:
-      - $COUCHDB_NAME
-  "
+  echo "      - $COUCHDB_NAME"
   fi
 }
 
@@ -413,7 +413,6 @@ function writeHeader {
 
 networks:
   $NETWORK:
-      driver: overlay
 
 services:
 "
