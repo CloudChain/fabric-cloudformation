@@ -32,6 +32,12 @@ if [ $# -le 0 ]; then
     help
 fi
 
+
+IFS=', ' read -r -a PORGS <<< "$PEER_ORGS"
+if [ ${#PORGS[*]} -le 1 ]; then
+    fatal "Peer organization at least two，change PEER_ORGS ENV."
+fi
+
 # Delete docker containers
 dockerContainers=$(docker ps -a | awk '$2~/hyperledger/ {print $1}')
 if [ "$dockerContainers" != "" ]; then
