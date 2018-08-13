@@ -128,10 +128,10 @@ function WritePeers {
                         \"tlsCACerts\": {
                             \"path\": \"/$DATA/$ORG-ca-chain.pem\"
                         },
-                        \"url\": \"grpcs://peer1-org1:7051\",
-                        \"eventUrl\": \"grpcs://peer1-org1:7053\",
+                        \"url\": \"grpcs://peer$COUNT-$ORG:7051\",
+                        \"eventUrl\": \"grpcs://peer$COUNT-$ORG:7053\",
                         \"grpcOptions\": {
-                            \"ssl-target-name-override\": \"peer1-org1\"
+                            \"ssl-target-name-override\": \"peer$COUNT-$ORG\"
                         }"
             if [ $ORGCOUNT -eq ${#PORGS[*]} -a $COUNT -eq $NUM_PEERS ]; then
                 echo "                  }"
