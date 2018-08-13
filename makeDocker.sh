@@ -395,8 +395,6 @@ function writePeer {
       - /var/run:/host/var/run
     networks:
       - $NETWORK
-    ports:
-      - \"7051\"
     depends_on:
       - setup"
   if $USE_STATE_DATABASE_COUCHDB; then
