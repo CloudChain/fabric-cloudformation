@@ -56,9 +56,9 @@ function RunExplorer {
 
     docker-compose -p net -f docker-compose.yml up -d explorer-db
     sleep 2
-    docker exec -it explorer-db psql -h localhost -U postgres -c "CREATE USER $DATABASE_USERNAME WITH PASSWORD '$DATABASE_PASSWD'"
-    docker exec -it explorer-db psql -h localhost -U postgres  -a -f /opt/explorerpg.sql >/dev/null 2>&1
-    docker exec -it explorer-db psql -h localhost -U postgres  -a -f /opt/updatepg.sql >/dev/null 2>&1
+    docker exec  explorer-db psql -h localhost -U postgres -c "CREATE USER $DATABASE_USERNAME WITH PASSWORD '$DATABASE_PASSWD'"
+    docker exec  explorer-db psql -h localhost -U postgres  -a -f /opt/explorerpg.sql >/dev/null 2>&1
+    docker exec  explorer-db psql -h localhost -U postgres  -a -f /opt/updatepg.sql >/dev/null 2>&1
     docker-compose -p net -f docker-compose.yml up -d explorer
     log "Explorer start success. http://localhost:8080"
 }
