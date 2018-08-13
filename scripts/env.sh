@@ -46,6 +46,20 @@ if [ $KAFKA_MIN_INSYNC_REPLICAS -gt 2 ]; then
     KAFKA_MIN_INSYNC_REPLICAS=2
 fi
 
+# blockchain-explorer
+USE_BLOCKCHAIN_EXPLORER=${USE_BLOCKCHAIN_EXPLORER:-true}
+EXPLORER_NAME=explorer
+EXPLORER_DB_NAME=explorer-db
+FABRIC_VERSION=1.2.0
+
+# explorer db
+DATABASE_PORT=5432
+DATABASE_NAME=fabricexplorer
+DATABASE_USERNAME=hppoc
+DATABASE_PASSWD=password
+
+
+
 #
 # The remainder of this file contains variables which typically would not be changed.
 #

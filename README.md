@@ -46,6 +46,9 @@ export COUCHDB_PASSWORD
 # Kafka consensus
 export USE_CONSENSUS_KAFKA=true
 export NUM_KAFKA=4
+
+# Explorer
+export USE_BLOCKCHAIN_EXPLORER=true
 ```
 
 

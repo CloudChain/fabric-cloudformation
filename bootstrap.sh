@@ -13,6 +13,8 @@ export CA_VERSION=$VERSION
 export THIRDPARTY_IMAGE_VERSION=0.4.8
 export ARCH=$(echo "$(uname -s|tr '[:upper:]' '[:lower:]'|sed 's/mingw64_nt.*/windows/')-$(uname -m | sed 's/x86_64/amd64/g')")
 export MARCH=$(uname -m)
+# blockchain-explorer
+export EXPLORER_VERSION=0.3
 
 # ensure we're in the fabric-samples directory
 dir=`basename $PWD`
@@ -53,6 +55,15 @@ dockerThirdPartyImagesPull() {
       echo
       docker pull hyperledger/fabric-$IMAGES:$THIRDPARTY_TAG
       docker tag hyperledger/fabric-$IMAGES:$THIRDPARTY_TAG hyperledger/fabric-$IMAGES
+  done
+}
+
+dockerExplorerImagesPull() {
+  for IMAGES in explorer explorer-db; do
+      echo "==> Explorer DOCKER IMAGE: $IMAGES"
+      echo
+      docker pull lisuo/fabric-$IMAGES:$EXPLORER_VERSION
+      docker tag lisuo/fabric-$IMAGES:$EXPLORER_VERSION lisuo/fabric-$IMAGES
   done
 }
 
@@ -151,6 +162,8 @@ dockerInstall() {
 	  dockerCaPull ${CA_TAG}
 	  echo "===> Pulling thirdparty docker images"
 	  dockerThirdPartyImagesPull ${THIRDPARTY_TAG}
+    echo "===> Pulling explorer docker images"
+    dockerExplorerImagesPull
 	  echo
 	  echo "===> List out hyperledger docker images"
 	  docker images | grep hyperledger*

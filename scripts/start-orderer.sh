@@ -22,6 +22,11 @@ cp /tmp/tls/keystore/* $ORDERER_GENERAL_TLS_PRIVATEKEY
 cp /tmp/tls/signcerts/* $ORDERER_GENERAL_TLS_CERTIFICATE
 rm -rf /tmp/tls
 
+
+# Generate client TLS cert and key pair for the peer CLI
+genClientTLSCert $ORDERER_NAME /$DATA/tls/$ORDERER_NAME-cli-client.crt /$DATA/tls/$ORDERER_NAME-cli-client.key
+
+
 # Enroll again to get the orderer's enrollment certificate (default profile)
 fabric-ca-client enroll -d -u $ENROLLMENT_URL -M $ORDERER_GENERAL_LOCALMSPDIR
 

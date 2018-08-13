@@ -25,6 +25,11 @@ function main {
    writeSetupFabric
    writeStartFabric
    writeRunFabric
+
+   if $USE_BLOCKCHAIN_EXPLORER; then
+      writeExplorer
+      writeExplorerDB
+   fi
    } > $SDIR/docker-compose.yml
    log "Created docker-compose.yml"
 }
@@ -275,6 +280,7 @@ function writeOrderer {
       - FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
       - ENROLLMENT_URL=https://$ORDERER_NAME_PASS@$CA_HOST:7054
       - ORDERER_HOME=$MYHOME
+      - ORDERER_NAME=$ORDERER_NAME
       - ORDERER_HOST=$ORDERER_HOST
       - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
       - ORDERER_GENERAL_GENESISMETHOD=file
@@ -285,7 +291,7 @@ function writeOrderer {
       - ORDERER_GENERAL_TLS_PRIVATEKEY=$MYHOME/tls/server.key
       - ORDERER_GENERAL_TLS_CERTIFICATE=$MYHOME/tls/server.crt
       - ORDERER_GENERAL_TLS_ROOTCAS=[$CA_CHAINFILE]
-      - ORDERER_GENERAL_TLS_CLIENTAUTHREQUIRED=true
+      - ORDERER_GENERAL_TLS_CLIENTAUTHREQUIRED=false
       - ORDERER_GENERAL_TLS_CLIENTROOTCAS=[$CA_CHAINFILE]
       - ORDERER_GENERAL_LOGLEVEL=debug
       - ORDERER_DEBUG_BROADCASTTRACEDIR=$LOGDIR
@@ -355,7 +361,7 @@ function writePeer {
       - CORE_PEER_TLS_CERT_FILE=$MYHOME/tls/server.crt
       - CORE_PEER_TLS_KEY_FILE=$MYHOME/tls/server.key
       - CORE_PEER_TLS_ROOTCERT_FILE=$CA_CHAINFILE
-      - CORE_PEER_TLS_CLIENTAUTHREQUIRED=true
+      - CORE_PEER_TLS_CLIENTAUTHREQUIRED=false
       - CORE_PEER_TLS_CLIENTROOTCAS_FILES=$CA_CHAINFILE
       - CORE_PEER_TLS_CLIENTCERT_FILE=/$DATA/tls/$PEER_NAME-client.crt
       - CORE_PEER_TLS_CLIENTKEY_FILE=/$DATA/tls/$PEER_NAME-client.key
@@ -389,6 +395,8 @@ function writePeer {
       - /var/run:/host/var/run
     networks:
       - $NETWORK
+    ports:
+      - \"7051\"
     depends_on:
       - setup"
   if $USE_STATE_DATABASE_COUCHDB; then
@@ -403,6 +411,50 @@ function writeCouchDB {
     environment:
       - COUCHDB_USER=$COUCHDB_USER
       - COUCHDB_PASSWORD=$COUCHDB_PASSWORD
+    networks:
+      - $NETWORK
+"
+}
+
+function writeExplorer {
+   echo "  $EXPLORER_NAME:
+    container_name: $EXPLORER_NAME
+    image: lisuo/fabric-explorer
+    environment:
+      - DATABASE_HOST=$EXPLORER_DB_NAME
+      - DATABASE_PORT=$DATABASE_PORT
+      - DATABASE_NAME=$DATABASE_NAME
+      - DATABASE_USERNAME=$DATABASE_USERNAME
+      - DATABASE_PASSWD=$DATABASE_PASSWD
+    volumes:
+      - ./$DATA:/$DATA"
+      if [ $FABRIC_VERSION == "1.2.0" ]; then
+        echo "      - ./config.json:/opt/explorer/app/platform/fabric/config_1.2.0.json"
+      fi
+      if [ $FABRIC_VERSION == "1.1.0" ]; then
+        echo "      - ./config.json:/opt/explorer/app/platform/fabric/config.json"
+      fi
+      echo "      - ./appconfig.json:/opt/explorer/appconfig.json
+      - ./pgconfig.json:/opt/explorer/app/persistence/postgreSQL/db/pgconfig.json
+    networks:
+      - $NETWORK
+    ports:
+      - \"8080:8080\"
+    depends_on:
+      - $EXPLORER_DB_NAME
+"
+}
+
+function writeExplorerDB {
+   echo "  $EXPLORER_DB_NAME:
+    container_name: $EXPLORER_DB_NAME
+    image: lisuo/fabric-explorer-db
+    environment:
+      - USER=$DATABASE_USERNAME
+      - DATABASE=$DATABASE_NAME
+      - PASSWD=$DATABASE_PASSWD
+    volumes:
+      - ./$DATA:/$DATA
     networks:
       - $NETWORK
 "

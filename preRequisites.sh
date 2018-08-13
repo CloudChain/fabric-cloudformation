@@ -1,3 +1,14 @@
+#!/bin/bash
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+#
+# This script builds the docker compose file needed to run this sample.
+#
+
 set -e
 
 SDIR=$(dirname "$0")

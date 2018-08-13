@@ -1,3 +1,14 @@
+#!/bin/bash
+#
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+#
+# This script builds the docker compose file needed to run this sample.
+#
+
 set -e
 
 SDIR=$(dirname "$0")
@@ -24,6 +35,8 @@ function help {
     # Kafka consensus
     USE_CONSENSUS_KAFKA
     NUM_KAFKA
+    # Explorer
+    USE_BLOCKCHAIN_EXPLORER
     "
     exit 1
 }
@@ -32,6 +45,23 @@ if [ $# -le 0 ]; then
     help
 fi
 
+function RunExplorer {
+    if [ $FABRIC_VERSION  == "1.2.0" ]; then
+        ${SDIR}/makeExplorer1.2.sh
+    fi
+
+    if [ $FABRIC_VERSION  == "1.1.0" ]; then
+        ${SDIR}/makeExplorer1.1.sh
+    fi
+
+    docker-compose -p net -f docker-compose.yml up -d explorer-db
+    sleep 2
+    docker exec -it explorer-db psql -h localhost -U postgres -c "CREATE USER $DATABASE_USERNAME WITH PASSWORD '$DATABASE_PASSWD'"
+    docker exec -it explorer-db psql -h localhost -U postgres  -a -f /opt/explorerpg.sql >/dev/null 2>&1
+    docker exec -it explorer-db psql -h localhost -U postgres  -a -f /opt/updatepg.sql >/dev/null 2>&1
+    docker-compose -p net -f docker-compose.yml up -d explorer
+    log "Explorer start success. http://localhost:8080"
+}
 
 IFS=', ' read -r -a PORGS <<< "$PEER_ORGS"
 if [ ${#PORGS[*]} -le 1 ]; then
@@ -59,6 +89,7 @@ log "Peer Org: $PEER_ORGS"
 log "Num Peer: $NUM_PEERS"
 log "Use CouchDB: $USE_STATE_DATABASE_COUCHDB"
 log "Use Kafka: $USE_CONSENSUS_KAFKA"
+log "Use Explorer: $USE_BLOCKCHAIN_EXPLORER"
 # Judge the docker-compose file
 if [ ! -f ${SDIR}/docker-compose.yml ]; then
     ${SDIR}/makeDocker.sh
@@ -81,6 +112,9 @@ TAIL_PID=$!
 while true; do 
    if [ -f ${SDIR}/${RUN_SUCCESS_FILE} ]; then
       kill -9 $TAIL_PID
+      if $USE_BLOCKCHAIN_EXPLORER; then
+        RunExplorer
+      fi
       exit 0
    elif [ -f ${SDIR}/${RUN_FAIL_FILE} ]; then
       kill -9 $TAIL_PID
