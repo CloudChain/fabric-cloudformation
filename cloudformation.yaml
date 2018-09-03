@@ -360,4 +360,4 @@ Resources:
 
 Outputs:
   ExplorerURL:
-    Value: !Join ["", ["http://", !GetAtt [ FabNode1, "PublicDnsName"], ":8080" ]]
+    Value: !Join ["", ["http://", !GetAtt [ FabNode1, "PublicDnsName"], ":8081" ]]
