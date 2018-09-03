@@ -1,0 +1,363 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  AWS CloudFormation Template for Fabric Cluster.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Hyperledger Fabric Parameters
+      Parameters:
+        - ChannelName
+        - OrdererOrgs
+        - OrdererNum
+        - PeerOrgs
+        - PeerNum
+        - UseIntermediateCA
+        - UseStateDBCouch
+        - CouchDBUser
+        - CouchDBPassword
+        - UseConsensusKafka
+        - KafkaNum
+
+    - Label:
+        default: VPC Network Configuration
+      Parameters:
+        - EC2KeyPairName
+        - EC2InstanceType
+        - TemplateOriginUrl
+
+Parameters:
+  ChannelName:
+    Type: String
+    Description: "Channel name within the Fabric network. All organizations will be part of this channel."
+    AllowedPattern: "[a-zA-Z]+[0-9a-zA-Z]*"
+    MinLength: 4
+    MaxLength: 16
+    ConstraintDescription: "Must be alphanumeric and start with a character and be between 4 and 16 characters."
+    Default: mychannel
+  OrdererOrg:
+    Type: String
+    Description: "Name of orderer organization. Must be alphanumeric, lower case, start with a character and be between 4 and 16 characters."
+    AllowedPattern: "[a-z]+[0-9a-z- ]*"
+    MinLength: 4
+    MaxLength: 16
+    Default: "orderer-org"
+  OrdererNum:
+    Type: Number
+    Description: "The orderer node number."
+    MinValue: 1
+    Default: 1
+  PeerOrgs:
+    Type: String
+    Description: "Names of peer organization. Must be alphanumeric, lower case, start with a character and be between 4 and 16 characters."
+    AllowedPattern: "[a-z]+[0-9a-z- ]*"
+    MinLength: 4
+    MaxLength: 64
+    Default: "peer-org1 peer-org2"
+  PeerNum:
+    Type: Number
+    Description: "The peer number of each peer organization."
+    MinValue: 2
+    Default: 2
+  UseIntermediateCA:
+    Type: String
+    Description: "Whether use the intermediate CA."
+    AllowedValues:
+      - true
+      - false
+    Default: true
+  UseStateDBCouch:
+    Type: String
+    Description: "Whether use the couchdb as the state database."
+    AllowedValues:
+      - true
+      - false
+    Default: false
+  CouchDBUser:
+    Type: String
+    Description: "The couchdb database username."
+    MinLength: 0
+    MaxLength: 16
+  CouchDBPassword:
+    Type: String
+    Description: "The couchdb database password."
+    MinLength: 0
+    MaxLength: 16
+  UseConsensusKafka:
+    Type: String
+    Description: "Whether use kafka as the consensus component."
+    AllowedValues:
+      - true
+      - false
+    Default: false
+  KafkaNum:
+    Type: Number
+    Description: "The kafka node number."
+    MinValue: 1
+    Default: 4
+  EC2KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: The name of an existing EC2 key pair to enable access to Amazon EC2 instances in the stack.
+  EC2InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.medium
+    AllowedValues:
+    - t2.micro
+    - t2.small
+    - t2.medium
+    - t2.large
+    - t2.xlarge
+    - t2.2xlarge
+    - m3.medium
+    - m3.large
+    - m3.xlarge
+    - m3.2xlarge
+    - m4.large
+    - m4.xlarge
+    - m4.2xlarge
+    - m4.4xlarge
+    - m4.10xlarge
+    - r3.large
+    - r3.xlarge
+    - r3.2xlarge
+    - r3.4xlarge
+    - r3.8xlarge
+    - r4.large
+    - r4.xlarge
+    - r4.2xlarge
+    - r4.4xlarge
+    - r4.8xlarge
+    - r4.16xlarge
+    - c4.large
+    - c4.xlarge
+    - c4.2xlarge
+    - c4.4xlarge
+    - c4.8xlarge
+    - c5.large
+    - c5.xlarge
+    - c5.2xlarge
+    - c5.4xlarge
+    - c5.9xlarge
+    - c5.18xlarge
+    ConstraintDescription: Please choose a valid instance type.
+  TemplateOriginUrl:
+    Type: String
+    Description: "The download url of fabric installer."
+    MinLength: 8
+
+Mappings:
+  LinuxAMINameMap:
+    Amazon-Linux-HVM:
+      Code: AMZNLINUXHVM
+  AWSAMIRegionMap:
+    AMI:
+      AMZNLINUXHVM: amzn-ami-hvm-2018.03.0.20180622-x86_64-gp2
+    ap-northeast-1:
+      AMZNLINUXHVM: ami-a77c30c1
+    ap-northeast-2:
+      AMZNLINUXHVM: ami-ebc47185
+    ap-south-1:
+      AMZNLINUXHVM: ami-7c87d913
+    ap-southeast-1:
+      AMZNLINUXHVM: ami-ed838091
+    ap-southeast-2:
+      AMZNLINUXHVM: ami-43874721
+    ca-central-1:
+      AMZNLINUXHVM: ami-5b55d23f
+    eu-central-1:
+      AMZNLINUXHVM: ami-ac442ac3
+    eu-west-1:
+      AMZNLINUXHVM: ami-3bfab942
+    eu-west-2:
+      AMZNLINUXHVM: ami-dff017b8
+    sa-east-1:
+      AMZNLINUXHVM: ami-5339733f
+    us-east-1:
+      AMZNLINUXHVM: ami-cfe4b2b0
+    us-east-2:
+      AMZNLINUXHVM: ami-0ad99772
+    us-west-1:
+      AMZNLINUXHVM: ami-bf5540df
+    us-west-2:
+      AMZNLINUXHVM: ami-d874e0a0
+    cn-northwest-1:
+      AMZNLINUXHVM: ami-6b6a7d09
+
+Resources:
+  FabRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - 'sts:AssumeRole'
+      Path: '/'
+  FabRolePolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: 'FabRolePolicy'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+              - 'logs:DescribeLogStreams'
+              - 'ecr:GetAuthorizationToken'
+              - 'ecr:BatchCheckLayerAvailability'
+              - 'ecr:GetDownloadUrlForLayer'
+              - 'ecr:GetRepositoryPolicy'
+              - 'ecr:DescribeRepositories'
+              - 'ecr:ListImages'
+              - 'ecr:DescribeImages'
+              - 'ecr:BatchGetImage'
+              - 's3:Get*'
+              - 's3:List*'
+            Resource: '*'
+      Roles:
+        - !Ref FabRole
+  FabInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: '/'
+      Roles:
+        - !Ref FabRole
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      CidrBlock: 172.16.0.0/16
+  PublicSubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      CidrBlock: 172.16.10.0/24
+      VpcId: !Ref VPC
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+  VPCGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+  PublicRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+  FabSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Allow access from HTTP and SSH traffic
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '7000'
+          ToPort: '9000'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '2049'
+          ToPort: '2049'
+          CidrIp: 0.0.0.0/0
+  FabNode1:
+    Type: 'AWS::EC2::Instance'
+    DependsOn:
+      - VPCGatewayAttachment
+    Properties:
+      ImageId:
+        Fn::FindInMap:
+        - AWSAMIRegionMap
+        - Ref: AWS::Region
+        - AMZNLINUXHVM
+      InstanceType: !Ref EC2InstanceType
+      KeyName: !Ref EC2KeyPairName
+      BlockDeviceMappings:
+        - DeviceName: /dev/sdb
+          Ebs:
+            VolumeType: io1
+            Iops: 200
+            DeleteOnTermination: false
+            VolumeSize: 20
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          GroupSet: [!Ref FabSecurityGroup]
+          SubnetId: !Ref PublicSubnet
+          DeleteOnTermination: true
+      IamInstanceProfile: !Ref FabInstanceProfile
+      UserData:
+        Fn::Base64:
+          Fn::Join:
+            - ''
+            - - "#!/bin/bash -x\n"
+              - "yum install -y aws-cfn-bootstrap git\n"
+              - "res=$?\n"
+              - "echo $res\n"
+              - "/opt/aws/bin/cfn-init -v "
+              - "         --stack "
+              - Ref: AWS::StackName
+              - "         --resource FabNode1"
+              - "         --region "
+              - Ref: AWS::Region
+              - "\n"
+    Metadata:
+      'AWS::CloudFormation::Init':
+        config:
+          packages:
+            yum:
+              xfsprogs: []
+              nfs-utils: []
+              git: []
+          commands:
+            01_mktable:
+              command: 'parted -a optimal --script /dev/xvdb -- mktable gpt'
+            02_mkpart:
+              command: 'parted -a optimal --script /dev/xvdb -- mkpart primary xfs 0% 100%'
+            03_mkfs:
+              command: 'mkfs.xfs -f /dev/xvdb1'
+            04_mount:
+              command: 'mkdir -p /cmx && mount /dev/xvdb1 /cmx'
+            05_git_clone:
+              command:  !Sub >
+                cd /tmp && git clone '${TemplateOriginUrl}' HyperLedger-Installer
+            06_chmod:
+              command: 'chmod +x /tmp/HyperLedger-Installer/*.sh'
+            07_pre:
+              command:  '/tmp/HyperLedger-Installer/preRequisites.sh'
+            08_setup:
+              command:  'cd /tmp/HyperLedger-Installer && ./startFabricNode.sh run | tee /tmp/fabric.log'
+              env:
+                ORDERER_ORGS: !Ref OrdererOrg
+                PEER_ORGS: !Ref PeerOrgs
+                NUM_PEERS: !Ref PeerNum
+                NUM_ORDERERS: !Ref OrdererNum
+                CHANNEL_NAME: !Ref ChannelName
+                USE_INTERMEDIATE_CA: !Ref UseIntermediateCA
+
+Outputs:
+  ExplorerURL:
+    Value: !Join ["", ["http://", !GetAtt [ FabNode1, "PublicDnsName"], ":8080" ]]
