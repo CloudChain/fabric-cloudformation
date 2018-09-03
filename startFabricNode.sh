@@ -60,7 +60,7 @@ function RunExplorer {
     docker exec  explorer-db psql -h localhost -U postgres  -a -f /opt/explorerpg.sql >/dev/null 2>&1
     docker exec  explorer-db psql -h localhost -U postgres  -a -f /opt/updatepg.sql >/dev/null 2>&1
     docker-compose -p net -f docker-compose.yml up -d explorer
-    log "Explorer start success. http://localhost:8080"
+    log "Explorer start success. http://localhost:8081"
 }
 
 IFS=', ' read -r -a PORGS <<< "$PEER_ORGS"
